@@ -24,7 +24,7 @@
 ### 二、clone 与配置
 
 ```shell
-git clone
+git clone   https://github.com/Thomas-YangHT/depStack.git
 cd depStack
 ```
 
