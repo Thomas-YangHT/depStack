@@ -24,7 +24,7 @@
 ### 二、clone 与配置
 
 ```shell
-git clone   https://github.com/Thomas-YangHT/depStack.git
+git clone  https://github.com/Thomas-YangHT/depStack.git
 cd depStack
 ```
 
@@ -53,10 +53,10 @@ virt_type=qemu
 - 复制 depStack 到三台机器：
 
 ```
-source devstack.conf
-for IP in $controllerIP $compute01IP $compute02IP 
+cd depStack;  source depstack.conf
+for IP in $controllerIP $computer01IP $computer02IP 
 do
-   scp  -r depStack  IP:.
+   scp  -r ../depStack  $IP:.
 done
 ```
 
