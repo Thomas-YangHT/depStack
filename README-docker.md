@@ -34,7 +34,9 @@
 | 168447636/deepin20:tools                   | 84.6MB |               | deepin20基础镜相          | 自编              |
 | 168447636/chrony:latest                    | 6.03MB | 计算+控制结点 | 时间同步                  | geoffh1977/chrony |
 
-详见： https://hub.docker.com/u/168447636
+- 基于 deepin20.5
+- openstack 3.16.2
+- 详见： https://hub.docker.com/u/168447636
 
 ### 二、clone 与配置
 
