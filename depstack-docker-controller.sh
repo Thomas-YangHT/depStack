@@ -10,6 +10,8 @@ source depstack.conf
 #确认配置主机名
 cat /etc/hosts|grep controller || cat hosts >>/etc/hosts
 hostnamectl set-hostname controller
+#安装ebtables
+apt install -y ebtables 
 #chrony 时间服务
 docker run -d --cap-add SYS_TIME \
 --name chrony \
@@ -253,15 +255,15 @@ docker exec neutron su -s /bin/bash neutron -c "neutron-db-manage --config-file 
 echo "--------------------------------------"
 echo -e "\033[32m Neutron组件安装完成 \033[0m"
 echo "--------------------------------------"
-##修正错误: Host 'controller' is not mapped to any cell
-docker exec nova  nova-manage cell_v2 discover_hosts --verbose
 ##修正错误：vm网络端口不正常，日志报firewall deny规则不允许
-docker exec neutron update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
-update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
 modprobe ebtables
 tee /etc/modules-load.d/ebtables.conf <<EOF
 ebtables
 EOF
+update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
+docker exec neutron update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
+##修正错误: Host 'controller' is not mapped to any cell
+docker exec nova  nova-manage cell_v2 discover_hosts --verbose
 #重启服务
 echo -e "\033[32m 重启docker容器，请稍候... \033[0m"
 systemctl restart docker
@@ -269,7 +271,7 @@ sleep 30
 #执行环境变量脚本
 source /root/admin-openrc.sh
 #安装openstack命令cli
-apt install -y python3-openstackclient ebtables 
+apt install -y python3-openstackclient 
 #导入cirros镜相
 unalias openstack
 openstack image create --file controller/cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --container-format bare --public cirros
