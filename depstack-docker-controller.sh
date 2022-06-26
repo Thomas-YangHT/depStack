@@ -269,7 +269,7 @@ sleep 30
 #执行环境变量脚本
 source /root/admin-openrc.sh
 #安装openstack命令cli
-apt install python3-openstackclient
+apt install -y python3-openstackclient ebtables 
 #导入cirros镜相
 unalias openstack
 openstack image create --file controller/cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --container-format bare --public cirros
