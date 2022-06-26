@@ -21,18 +21,19 @@
 - **注意**：在控制中心-》电源管理，关闭休眠设置
 - **容器说明**
 
-| 容器名                                     | 大小   | 布署位置      | 功能                      | 来源              |
-| ------------------------------------------ | ------ | ------------- | ------------------------- | ----------------- |
-| 168447636/deepin20-novacompute:20.5        | 1.5GB  | 计算结点      | nova-compute              | 自编              |
-| 168447636/deepin20-neutronlinuxbridge:20.5 | 668MB  | 计算结点      | neutron-linuxbridge-agent | 自编              |
-| 168447636/deepin20-keystone:20.5           | 601MB  | 控制结点      | keystone + dashboard      | 自编              |
-| 168447636/deepin20-neutron:20.5            | 686MB  | 控制结点      | neutron控制节点系列组件   | 自编              |
-| 168447636/deepin20-nova:20.5               | 1.08GB | 控制结点      | nova控制节点系列组件      | 自编              |
-| 168447636/deepin20-glance:20.5             | 849MB  | 控制结点      | glance                    | 自编              |
-| 168447636/mariadb:10.7                     | 414MB  | 控制结点      | mariadb                   | mariadb:10.7      |
-| 168447636/memcached:alpine                 | 7.97MB | 控制结点      | memcached                 | memcached:alpine  |
-| 168447636/deepin20:tools                   | 84.6MB |               | deepin20基础镜相          | 自编              |
-| 168447636/chrony:latest                    | 6.03MB | 计算+控制结点 | 时间同步                  | geoffh1977/chrony |
+| 容器名                                     | 大小   | 布署位置      | 功能                      | 来源                  |
+| ------------------------------------------ | ------ | ------------- | ------------------------- | --------------------- |
+| 168447636/deepin20-novacompute:20.5        | 1.5GB  | 计算结点      | nova-compute              | 自编                  |
+| 168447636/deepin20-neutronlinuxbridge:20.5 | 668MB  | 计算结点      | neutron-linuxbridge-agent | 自编                  |
+| 168447636/deepin20-keystone:20.5           | 601MB  | 控制结点      | keystone + dashboard      | 自编                  |
+| 168447636/deepin20-neutron:20.5            | 686MB  | 控制结点      | neutron控制节点系列组件   | 自编                  |
+| 168447636/deepin20-nova:20.5               | 1.08GB | 控制结点      | nova控制节点系列组件      | 自编                  |
+| 168447636/deepin20-glance:20.5             | 849MB  | 控制结点      | glance                    | 自编                  |
+| 168447636/deepin20:tools                   | 84.6MB | ---------     | deepin20基础镜相          | 自编                  |
+| 168447636/mariadb:10.7                     | 414MB  | 控制结点      | mariadb                   | mariadb:10.7          |
+| 168447636/memcached:alpine                 | 7.97MB | 控制结点      | memcached                 | memcached:alpine      |
+| 168447636/rabbitmq:3-management            | 257MB  | 控制结点      | rabbitmq                  | rabbitmq:3-management |
+| 168447636/chrony:latest                    | 6.03MB | 计算+控制结点 | 时间同步                  | geoffh1977/chrony     |
 
 - 基于 deepin20.5
 - openstack 3.16.2
