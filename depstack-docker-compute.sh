@@ -34,6 +34,8 @@ $DOCKER_REGISTRY/chrony
 #         计算节点compute部署：                  #
 ###############################################
 #运行nova-compute
+mkdir /var/lib/nova/instances 
+chown nova:nova /var/lib/nova/instances
 docker run --name novacompute \
 --restart=always \
 --net=host \
