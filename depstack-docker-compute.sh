@@ -57,7 +57,7 @@ tee /etc/modules-load.d/ebtables.conf <<EOF
 ebtables
 EOF
 #安装ebtables/libvirt-daemon
-apt insttall -y libvirt-daemon libvirt-daemon-system ebtables
+apt install -y libvirt-daemon libvirt-daemon-system ebtables
 #nova 用户和组
 groupadd nova  -g 64060
 useradd nova -G libvirt,nova -u 64060 -g 64060 -s /bin/sh -d /var/lib/nova
