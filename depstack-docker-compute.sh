@@ -12,8 +12,16 @@ HELP="用法： 请加参数 compute01 或 compute02"
 net2Name=$(ip a |grep -Po "^3: \K.*\d:"|awk -F':' '{print $1}')
 ##add other compute node like above in here
 [ "$computeIP" = "" ] && echo  $HELP && exit 0
-
 [ -n "`echo $DOCKER_REGISTRY |grep myharbor`" ] && echo 10.121.1.254 www.myharbor.com >>/etc/hosts
+
+#安装ebtables/libvirt-daemon
+apt install -y libvirt-daemon libvirt-daemon-system ebtables
+#nova 用户和组
+groupadd nova  -g 64060
+useradd nova -G libvirt,nova -u 64060 -g 64060 -s /bin/sh -d /var/lib/nova
+#解决网络端口无法启动问题
+update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
+
 #chrony 时间服务
 docker run -d --cap-add SYS_TIME \
 --name chrony \
@@ -22,7 +30,9 @@ docker run -d --cap-add SYS_TIME \
 -e NTP_SERVER=2.debian.pool.ntp.org \
 -p 123:123/udp \
 $DOCKER_REGISTRY/chrony
-
+###############################################
+#         计算节点compute部署：                  #
+###############################################
 #运行nova-compute
 docker run --name novacompute \
 --restart=always \
@@ -56,11 +66,5 @@ modprobe ebtables
 tee /etc/modules-load.d/ebtables.conf <<EOF
 ebtables
 EOF
-#安装ebtables/libvirt-daemon
-apt install -y libvirt-daemon libvirt-daemon-system ebtables
-#nova 用户和组
-groupadd nova  -g 64060
-useradd nova -G libvirt,nova -u 64060 -g 64060 -s /bin/sh -d /var/lib/nova
-#解决网络端口无法启动问题
-update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
+
 
