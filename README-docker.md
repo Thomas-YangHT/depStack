@@ -59,6 +59,9 @@ cd depStack
 - 编辑  depstack.conf,  按你的情况修改IP、虚拟类型、镜相源
 
 ```
+#网卡2 flat与外部网络，不用配IP
+NET2=11.0.1.0/24
+
 #网卡3 租户网或VM网络 vxlan模式
 c1IP=12.0.1.101
 c2IP=12.0.1.102
