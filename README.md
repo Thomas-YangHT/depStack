@@ -1,6 +1,6 @@
 # depStack
 
-**A  install script  for  opensttack  on deepin linux OS  20.5**
+**A  install script  for  opensttack based on deepin linux OS 20.5**
 
 - [deb版](README-normal.md)
 
