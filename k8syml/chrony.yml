@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: chrony
+  name: chrony
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    controller: "true"
+  containers:
+  - env:
+    - name: ALLOW_CIDR
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: ALLOW_CIDR
+    - name: NTP_SERVER
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: NTP_SERVER
+    image: www.myharbor.com:10443/168447636/chrony
+    imagePullPolicy: IfNotPresent
+    name: chrony
+    ports:
+    - containerPort: 123
+      protocol: UDP
+    volumeMounts:
+    - name: hosts-config
+      mountPath: "/depstack/hosts"
+    resources: {}
+    securityContext:
+      privileged: true
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: hosts-config
+    configMap:
+      name: hosts-config
+
+status: {}
+

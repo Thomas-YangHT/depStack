@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: neutronlinuxbridge
+  name: neutronlinuxbridge
+  namespace: openstack
+spec:
+  selector:
+    matchLabels:
+      app: neutronlinuxbridge
+  template:
+    metadata:
+      labels:
+        app: neutronlinuxbridge
+    spec:
+      hostNetwork: true
+      nodeSelector: 
+        compute: "true"
+      containers:
+      - env:
+        - name: controllerIP
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: controllerIP
+        image: www.myharbor.com:10443/168447636/deepin20-neutronlinuxbridge:20.5
+        name: neutronlinuxbridge
+        volumeMounts:
+        - name: hosts-config
+          mountPath: "/depstack/configmap"
+        - name: kernel-modules
+          mountPath: "/lib/modules/5.10.18-amd64-desktop"
+        resources: {}
+        securityContext:
+          privileged: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: hosts-config
+        configMap:
+          name: hosts-config
+      - name: kernel-modules
+        hostPath: 
+          path: "/lib/modules/5.10.18-amd64-desktop"
+
+

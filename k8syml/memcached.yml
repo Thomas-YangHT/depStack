@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: memcache
+  name: memcache
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    controller: "true"
+  containers:
+  - image: www.myharbor.com:10443/168447636/memcached:alpine
+    name: memcache
+    ports:
+    - containerPort: 11211
+      protocol: TCP
+  restartPolicy: Always

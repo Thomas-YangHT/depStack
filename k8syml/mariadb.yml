@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: mariadb
+  name: mariadb
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    controller: "true"
+  containers:
+  - env:
+    - name: MARIADB_USER
+      value: example-user
+    - name: MARIADB_PASSWORD
+      value: my_cool_secret
+    - name: MARIADB_ROOT_PASSWORD
+      value: mariadb
+    image: www.myharbor.com:10443/168447636/mariadb:10.7
+    name: mariadb
+    ports:
+    - containerPort: 3306
+      protocol: TCP
+    volumeMounts:
+    - name: hosts-config
+      mountPath: "/depstack/hosts"
+    - name: var-run-mysqld
+      mountPath: "/var/run/mysqld"
+    - name: datadir
+      mountPath: "/var/lib/mysql/"
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: hosts-config
+    configMap:
+      name: hosts-config
+  - name: var-run-mysqld
+    hostPath: 
+      path: /var/run/mysqld
+  - name: datadir
+    hostPath: 
+      path: /var/lib/mysqld
+status: {}
+

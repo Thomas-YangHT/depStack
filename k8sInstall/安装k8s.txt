@@ -1,0 +1,27 @@
+# k8s安装
+---
+## master节点&&node节点
+VER=1.23.1
+apt-get update && apt-get install -y apt-transport-https
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+EOF 
+
+apt-get update
+apt-cache show kubeadm |grep -i version
+master节点
+### 安装指定版本：
+apt-get install kubeadm=${VER}-00 kubelet=${VER}-00 docker.io  kubectl=${VER}-00 
+
+
+kubeadm init --kubernetes-version=${VER} --apiserver-advertise-address=192.168.200.210 --image-repository registry.aliyuncs.com/google_containers --service-cidr=10.1.0.0/16 --pod-network-cidr=10.244.0.0/16
+
+wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f kube-flannel.yml
+
+---
+## node节点
+### 安装指定版本：
+VER=1.23.1
+apt-get install kubeadm=${VER}-00 kubelet=${VER}-00 docker.io

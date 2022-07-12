@@ -1,6 +1,6 @@
 #! /bin/bash
 ##
-## a shell script for comput node auto install
+## a shell for comput node docker install
 ## system:  deepin 20.5
 ##
 TERM=xterm-256color
@@ -9,10 +9,10 @@ cat /etc/hosts|grep controller || cat hosts >>/etc/hosts
 HELP="用法： 请加参数 compute01 或 compute02"
 [ "$1" = "compute01" ] && computeIP=$computer01IP && hostnamectl set-hostname compute01 && net3IP=$c2IP
 [ "$1" = "compute02" ] && computeIP=$computer02IP && hostnamectl set-hostname compute02 && net3IP=$c3IP
-net2Name=$(ip a |grep -Po "^3: \K.*\d:"|awk -F':' '{print $1}')
-##add other compute node like above in here
+##可增加更多计算结点配置在这
 [ "$computeIP" = "" ] && echo  $HELP && exit 0
 [ -n "`echo $DOCKER_REGISTRY |grep myharbor`" ] && echo 10.121.1.254 www.myharbor.com >>/etc/hosts
+net2Name=$(ip a |grep -Po "^3: \K.*\d:"|awk -F':' '{print $1}')
 
 #安装ebtables/libvirt-daemon
 apt install -y libvirt-daemon libvirt-daemon-system ebtables
@@ -21,7 +21,10 @@ groupadd nova  -g 64060
 useradd nova -G libvirt,nova -u 64060 -g 64060 -s /bin/sh -d /var/lib/nova
 #解决网络端口无法启动问题
 update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
-
+modprobe ebtables
+tee /etc/modules-load.d/ebtables.conf <<EOF
+ebtables
+EOF
 #chrony 时间服务
 docker run -d --cap-add SYS_TIME \
 --name chrony \
@@ -64,9 +67,9 @@ docker run --name neutronlinuxbridge \
 -v /usr/lib/modules/`uname -r`:/usr/lib/modules/`uname -r` \
 -d \
 $DOCKER_REGISTRY/deepin20-neutronlinuxbridge:20.5
-modprobe ebtables
-tee /etc/modules-load.d/ebtables.conf <<EOF
-ebtables
-EOF
+
+echo "\033[31m -------------------------------------- \033[0m"
+echo -e "      \033[31m 安装完毕 \033[0m    "
+echo "\033[31m -------------------------------------- \033[0m"
 
 

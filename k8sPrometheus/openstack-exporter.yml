@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: openstack-exporter
+  name: openstack-exporter
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openstack-exporter
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: openstack-exporter
+    spec:
+      hostNetwork: true
+      containers:
+      - env:
+        - name: OS_PROJECT_DOMAIN_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_PROJECT_DOMAIN_NAME
+        - name: OS_AUTH_URL
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_AUTH_URL
+        - name: OS_IDENTITY_API_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_IDENTITY_API_VERSION
+        - name: OS_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_PASSWORD
+        - name: OS_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_USERNAME
+        - name: OS_PROJECT_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_PROJECT_NAME
+        - name: OS_USER_DOMAIN_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: novarc
+              key: OS_USER_DOMAIN_NAME
+        image: www.myharbor.com:10443/168447636/prom-openstack-exporter:latest
+        name: openstack-exporter
+        ports:
+        - containerPort: 9183
+          hostPort: 9183
+          protocol: TCP
+          name: h-metrics
+        resources: {}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+

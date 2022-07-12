@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: neutron
+  name: neutron
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    controller: "true"
+  containers:
+  - env:
+    - name: controllerIP
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: controllerIP
+    - name: net2Name
+      value: ens9
+    - name: ctl_net3_IP
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: c1IP
+    image: www.myharbor.com:10443/168447636/deepin20-neutron:20.5
+    name: neutron
+    volumeMounts:
+    - name: hosts-config
+      mountPath: "/depstack/configmap"
+    - name: kernel-modules
+      mountPath: "/usr/lib/modules/5.10.18-amd64-desktop"
+    resources: {}
+    securityContext:
+      privileged: true
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: hosts-config
+    configMap:
+      name: hosts-config
+  - name: kernel-modules
+    hostPath: 
+      path: /usr/lib/modules/5.10.18-amd64-desktop
+
+status: {}
+

@@ -274,8 +274,10 @@ source /root/admin-openrc.sh
 apt install -y python3-openstackclient 
 #导入cirros镜相
 unalias openstack
+echo -e "\033[31m 导入cirros镜相 \033[0m"
 openstack image create --file controller/cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --container-format bare --public cirros
 openstack image list
+echo -e "\033[31m 建立镜相 1c512M 规格 \033[0m"
 openstack flavor create --vcpus 1 --ram 512 --disk 1 --public vm.linux.1H512M
 openstack flavor list
 #openstack server create \
@@ -287,7 +289,6 @@ openstack flavor list
 ##检查安装服务状态
 cat ./controller/check.sh |bash
 echo "--------------------------------------"
-echo -e "\033[31m 浏览器访问http://$controllerIP,用户名admin/密码keystone。开启Openstack之旅 \033[0m"
+echo -e "\033[31m 浏览器访问http://$controllerIP,用户名admin /密码keystone 开启Openstack之旅 \033[0m"
 echo -e "\033[31m rabbitmq: 浏览器访问http://$controllerIP:15472,用户名uosrabbitmq/密码rabbitmq。开启Openstack之旅 \033[0m"
-echo -e "\033[31m 导入cirros镜相 \033[0m"
 echo "--------------------------------------"

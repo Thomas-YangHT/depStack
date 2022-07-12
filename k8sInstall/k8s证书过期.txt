@@ -1,0 +1,11 @@
+# k8s证书过期处理
+--
+kubeadm certs check-expiration
+cd /etc/
+cp -r kubernetes/ kubernetes.bak 
+kubeadm certs renew all
+kubeadm init phase kubeconfig all
+kubeadm certs check-expiration
+systemctl restart kubelet
+cp /etc/kubernetes/admin.conf ~/.kube/config
+kubectl get po -A

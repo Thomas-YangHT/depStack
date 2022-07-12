@@ -1,0 +1,12 @@
+{
+  "registry-mirrors": ["http://registry.kubeoperator.io:8082","http://registry.kubeoperator.io:8083","https://www.myharbor.com:10443"],
+  "insecure-registries": ["registry.kubeoperator.io:8082","registry.kubeoperator.io:8083", "www.myharbor.com:10443"],
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "max-concurrent-downloads": 10,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+  }

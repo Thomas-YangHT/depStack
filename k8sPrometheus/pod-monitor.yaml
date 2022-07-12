@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app: openstack-exporter
+  name: openstack-exporter
+  namespace: monitoring
+spec:
+  podMetricsEndpoints:
+  - interval: 15s
+    path: /metrics
+    port: h-metrics
+  namespaceSelector:
+    matchNames:
+    - monitoring
+  selector:
+    matchLabels:
+      app: openstack-exporter

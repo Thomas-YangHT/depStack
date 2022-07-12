@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: openstack-exporter
+  name: openstack-exporter
+  namespace: monitoring
+spec:
+  clusterIP: None
+  ports:
+  - name: h-metrics
+    port: 9183
+    targetPort: 9183
+  selector:
+    app: openstack-exporter

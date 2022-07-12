@@ -1,0 +1,53 @@
+FROM  168447636/deepin20:tools
+USER root
+WORKDIR  /depstack
+COPY ./sources.list  /etc/apt/sources.list
+COPY  .  .
+ENV compute01IP=10.121.100.102
+ENV vg_name=vg_volume01
+RUN echo 10.121.1.254 download.exam.com  >> /etc/hosts && apt update && apt -y upgrade && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  TERM=xterm  apt-get -y install cinder-volume python-mysqldb tgt thin-provisioning-tools && \
+  mv /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak && \
+  echo "[DEFAULT]\n\
+enabled_backends = lvm\n\
+my_ip = $compute01IP\n\
+rootwrap_config = /etc/cinder/rootwrap.conf\n\
+api_paste_confg = /etc/cinder/api-paste.ini\n\
+state_path = /var/lib/cinder\n\
+auth_strategy = keystone\n\
+transport_url = rabbit://uosrabbitmq:rabbitmq@controller\n\
+glance_api_servers = http://controller:9292\n\
+[database]\n\
+connection = mysql+pymysql://uoscinder:cinder@controller/cinder\n\
+[keystone_authtoken]\n\
+www_authenticate_uri = http://controller:5000\n\
+auth_url = http://controller:35357\n\
+memcached_servers = controller:11211\n\
+auth_type = password\n\
+project_domain_name = default\n\
+user_domain_name = default\n\
+project_name = service\n\
+username = cinder\n\
+password = cinder\n\
+[oslo_concurrency]\n\
+lock_path = \$state_path/tmp\n\
+[lvm]\n\
+iscsi_helper = tgtadm\n\
+volume_group = $vg_name\n\
+iscsi_ip_address = $computer01IP\n\
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver\n\
+volumes_dir = \$state_path/volumes\n\
+iscsi_protocol = iscsi" >/etc/cinder/cinder.conf && \
+chmod 644 /etc/cinder/cinder.conf && \
+chown root:cinder /etc/cinder/cinder.conf && \
+  cat hosts >>/etc/hosts && \
+  rm -f docker-build.sh  Dockerfile.nova  sources.list && \
+  apt autoremove && \
+  apt-get clean && \
+  rm -rf /usr/share/man /usr/share/doc && \
+  rm -rf /var/lib/apt/lists/* && \
+  du -sh /* ; \
+  du -sh /usr/*; \
+  cat /etc/hosts
+CMD ["/bin/bash","./start.sh"]

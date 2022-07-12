@@ -1,0 +1,68 @@
+FROM  168447636/deepin20:tools
+USER root
+WORKDIR  /depstack
+COPY ./sources.list  /etc/apt/sources.list
+COPY  .  .
+RUN echo 10.121.1.254 download.exam.com  >> /etc/hosts && apt update && apt -y upgrade && \
+  apt install -y apt-utils  && \
+  apt install -d -y glance && \
+  ls -l  /var/cache/apt/archives/glance*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/glance-api*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/glance-common*.deb && \
+  echo "glance glance/configure_api-endpoint seen true \n\
+  glance glance/configure_ksat seen true\n\
+  glance glance/configure_db seen true\n\
+  glance glance/configure_rabbit seen true"  | debconf-set-selections && \
+  TERM=xterm apt install -y glance && \
+  mv /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak && \
+  #配置文件编写
+  echo  "\
+[DEFAULT]\n\
+bind_host = 0.0.0.0\n\
+[glance_store]\n\
+default_store = file\n\
+filesystem_store_datadir = /var/lib/glance/images/\n\
+[database]\n\
+connection = mysql+pymysql://uosglance:glance@controller/glance\n\
+[keystone_authtoken]\n\
+www_authenticate_uri = http://controller:5000\n\
+auth_url = http://controller:35357\n\
+memcached_servers = controller:11211\n\
+auth_type = password\n\
+project_domain_name = default\n\
+user_domain_name = default\n\
+project_name = service\n\
+username = glance\n\
+password = glance\n\
+[paste_deploy]\n\
+flavor = keystone" > /etc/glance/glance-api.conf && \
+mv /etc/glance/glance-registry.conf /etc/glance/glance-registry.conf.bak && \
+  echo  "\
+[DEFAULT]\n\
+bind_host = 0.0.0.0\n\
+[database]\n\
+connection = mysql+pymysql://uosglance:glance@controller/glance\n\
+[keystone_authtoken]\n\
+www_authenticate_uri = http://controller:5000\n\
+auth_url = http://controller:35357\n\
+memcached_servers = controller:11211\n\
+auth_type = password\n\
+project_domain_name = default\n\
+user_domain_name = default\n\
+project_name = service\n\
+username = glance\npassword = glance\n\
+[paste_deploy]\n\
+flavor = keystone" > /etc/glance/glance-registry.conf && \
+  #更改权限
+  chmod 644 /etc/glance/glance-api.conf /etc/glance/glance-registry.conf && \
+  chown glance /etc/glance/glance-api.conf /etc/glance/glance-registry.conf && \
+  cat hosts >>/etc/hosts && \
+  rm -f docker-build.sh  Dockerfile.nova  sources.list && \
+  apt autoremove && \
+  apt-get clean && \
+  rm -rf /usr/share/man /usr/share/doc && \
+  rm -rf /var/lib/apt/lists/* && \
+  du -sh /* ; \
+  du -sh /usr/*; \
+  cat /etc/hosts
+CMD ["/bin/bash","./start.sh"]

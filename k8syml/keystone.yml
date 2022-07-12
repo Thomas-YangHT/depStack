@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: keystone
+  name: keystone
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    controller: "true"
+  containers:
+  - env:
+    - name: controllerIP
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: controllerIP
+    name: keystone
+    image: www.myharbor.com:10443/168447636/deepin20-keystone:20.5
+    ports:
+    - containerPort: 80
+      protocol: TCP
+    - containerPort: 5000
+      protocol: TCP
+    - containerPort: 35357
+      protocol: TCP
+    volumeMounts:
+    - name: hosts-config
+      mountPath: "/depstack/configmap"
+    - name: keys-fernet
+      mountPath: "/etc/keystone/fernet-keys"
+    - name: keys-cred
+      mountPath: "/etc/keystone/credential-keys"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: hosts-config
+    configMap:
+      name: hosts-config
+  - name: keys-fernet
+    hostPath:
+      path: "/etc/keystone/fernet-keys"
+  - name: keys-cred
+    hostPath:
+      path: "/etc/keystone/credential-keys"

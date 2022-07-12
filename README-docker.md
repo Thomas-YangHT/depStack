@@ -2,6 +2,8 @@
 
 **A  install script  for  docker opensttack  on deepin linux OS  20.5**
 
+- check pass on Deepin20.5,  CentOS7 
+
 ## 使用示例
 
 ### 一、准备三台服务器

@@ -1,0 +1,128 @@
+FROM  168447636/deepin20:tools
+USER root
+WORKDIR  /depstack
+COPY ./sources.list  /etc/apt/sources.list
+COPY  .  .
+ENV controllerIP=10.121.100.101
+ENV virt_type=qemu
+RUN echo 10.121.1.254 download.exam.com  >> /etc/hosts && apt update && apt -y upgrade && \
+  apt install -y apt-utils  && \
+  apt install -d -y nova-api nova-conductor nova-consoleauth nova-consoleproxy nova-scheduler nova-placement-api python3-novaclient nova-spiceproxy spice-html5 spice-vdagent crudini && \
+  ls -l  /var/cache/apt/archives/nova*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/nova-api_*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/nova-common_*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/nova-placement-api_*.deb && \
+  echo "\
+nova nova/configure_api-endpoint seen true\n\
+nova novaapi/configure_db seen true\n\
+nova nova/metadata_secret password\n\
+nova nova/neutron_admin_password password\n\
+nova nova/placement_admin_password password\n\
+nova nova/configure_ksat seen true\n\
+nova nova/active-api string osapi_compute, metadata\n\
+nova nova/my-ip string $controllerIP\n\
+nova nova/placement_admin_username string placement\n\
+nova nova/configure_db seen true\n\
+nova nova/configure_rabbit seen true\n\
+nova nova/cinder_os_region_name string RegionOne\n\
+nova nova/placement_admin_tenant_name string service\n\
+nova nova/glance_api_servers string http://controller:9292\n\
+nova nova/placement_os_region_name string RegionOne\n\
+nova nova/neutron_url string http://controller:9696\n\
+nova nova-placement-api/configure_db seen true\n\
+nova nova-placement-api/configure_api-endpoint seen true "  | debconf-set-selections && \
+  TERM=xterm  apt install -y nova-api nova-conductor nova-consoleauth nova-consoleproxy nova-scheduler nova-placement-api python3-novaclient nova-spiceproxy spice-html5 spice-vdagent crudini && \
+  mv /etc/nova/nova.conf /etc/nova/nova.conf.bak && \
+  egrep -v "^#|^$" /etc/nova/nova.conf.bak > /etc/nova/nova.conf && \
+  echo "[DEFAULT]\n\
+log_dir = /var/log/nova\n\
+transport_url = rabbit://uosrabbitmq:rabbitmq@controller\n\
+my_ip = $controllerIP\n\
+linuxnet_interface_driver = nova.network.linux_net.LinuxBridgeInterfaceDriver\n\
+use_neutron = True\n\
+firewall_driver = nova.virt.firewall.NoopFirewallDriver\n\
+pybasedir = /usr/lib/python3/dist-packages\n\
+bindir = /usr/bin\n\
+state_path = /var/lib/nova\n\
+enabled_apis = osapi_compute,metadata\n\
+vnc_enabled = false\n\
+[api]\n\
+auth_strategy = keystone\n\
+[api_database]\n\
+connection = mysql+pymysql://uosnova:nova@controller/nova_api\n\
+[cinder]\n\
+os_region_name = RegionOne\n\
+[database]\n\
+connection = mysql+pymysql://uosnova:nova@controller/nova\n\
+[glance]\n\
+api_servers = http://controller:9292\n\
+[keystone_authtoken]\n\
+password = nova\n\
+memcached_servers = controller:11211\n\
+auth_url = http://controller:35357\n\
+project_name = service\n\
+project_domain_name = default\n\
+username = nova\n\
+user_domain_name = default\n\
+www_authenticate_uri = http://controller:5000\n\
+region_name = RegionOne\n\
+auth_type = password\n\
+[libvirt]\n\
+virt_type = $virt_type\n\
+[neutron]\n\
+region_name = RegionOne\n\
+password = neutron\n\
+default_floating_pool = ext-net\n\
+service_metadata_proxy = true\n\
+metadata_proxy_shared_secret =  metadata\n\
+auth_type = password\n\
+auth_url = http://controller:35357\n\
+project_name = service\n\
+project_domain_name = default\n\
+username = neutron\n\
+user_domain_name = default\n\
+endpoint_override = http://controller:9696\n\
+[placement]\n\
+password = placement\n\
+auth_type = password\n\
+auth_url = http://controller:35357\n\
+project_name = service\n\
+project_domain_name = default\n\
+username = placement\n\
+user_domain_name = default\n\
+region_name = RegionOne\n\
+[placement_database]\n\
+connection = mysql+pymysql://uosnova:nova@controller/nova_placement\n\
+[spice]\n\
+enabled = true\n\
+server_listen = 0.0.0.0\n\
+server_proxyclient_address = \$my_ip\n\
+html5proxy_base_url = http://$controllerIP:6082/spice_auto.html\n\
+html5proxy_host = 0.0.0.0\n\
+html5proxy_port = 6082\n\
+eymap = en-us\n\
+agent_enabled = true\n\
+[wsgi]\n\
+api_paste_config = /etc/nova/api-paste.ini" > /etc/nova/nova.conf && \
+  crudini --set /etc/nova/nova.conf DEFAULT vnc_enabled false && \
+  crudini --set /etc/nova/nova.conf spice enabled true && \
+  crudini --set /etc/nova/nova.conf spice html5proxy_base_url http://$controllerIP:6082/spice_auto.html && \
+  crudini --set /etc/nova/nova.conf spice html5proxy_host \$my_ip && \
+  crudini --set /etc/nova/nova.conf spice html5proxy_port 6082 && \
+  crudini --set /etc/nova/nova.conf spice eymap en-us && \
+  crudini --set /etc/nova/nova.conf spice server_listen 0.0.0.0 && \
+  crudini --set /etc/nova/nova.conf spice server_proxyclient_address \$my_ip && \
+  crudini --set /etc/nova/nova.conf spice agent_enabled true && \
+  crudini --set /etc/nova/nova.conf vnc enabled false && \
+  chmod 640 /etc/nova/nova.conf && \
+  chgrp nova /etc/nova/nova.conf && \
+  cat hosts >>/etc/hosts && \
+  rm -f docker-build.sh  Dockerfile.nova  sources.list && \
+  apt autoremove && \
+  apt-get clean && \
+  rm -rf /usr/share/man /usr/share/doc && \
+  rm -rf /var/lib/apt/lists/* && \
+  du -sh /* ; \
+  du -sh /usr/*; \
+  cat /etc/hosts
+CMD ["/bin/bash","./start.sh"]

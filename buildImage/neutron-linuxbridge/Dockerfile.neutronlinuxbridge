@@ -1,0 +1,86 @@
+FROM  168447636/deepin20:tools
+USER root
+WORKDIR  /depstack
+COPY ./sources.list  /etc/apt/sources.list
+COPY  .  .
+ENV controllerIP=10.121.100.101
+ENV net2Name=ens10
+ENV ctl_net3_IP=12.1.0.102
+RUN echo 10.121.1.254 download.exam.com  >> /etc/hosts && apt update && apt -y upgrade && \
+  apt install -y apt-utils  && \
+  export DEBIAN_FRONTEND=noninteractive && \
+  TERM=xterm apt install -y  neutron-common neutron-plugin-ml2 neutron-plugin-linuxbridge-agent && \
+  mv /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak && \
+  echo "[DEFAULT]\n\
+[DEFAULT]\n\
+core_plugin = ml2\n\
+service_plugins = router\n\
+auth_strategy = keystone\n\
+state_path = /var/lib/neutron\n\
+dhcp_agent_notification = True\n\
+allow_overlapping_ips = True\n\
+# RabbitMQ connection info\n\
+transport_url = rabbit://uosrabbitmq:rabbitmq@controller\n\
+[agent]\n\
+root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf\n\
+# Keystone auth info\n\
+[keystone_authtoken]\n\
+www_authenticate_uri = http://controller:5000\n\
+auth_url = http://controller:35357\n\
+memcached_servers = controller:11211\n\
+auth_type = password\n\
+project_domain_name = default\n\
+user_domain_name = default\n\
+project_name = service\n\
+username = neutron\n\
+password = neutron\n\
+[oslo_concurrency]\n\
+lock_path = \$state_path/lock " > /etc/neutron/neutron.conf && \
+  chmod 640 /etc/neutron/neutron.conf && \
+  chgrp neutron /etc/neutron/neutron.conf && \
+  echo "\
+[DEFAULT]\n\
+[agent]\n\
+[linux_bridge]\n\
+physical_interface_mappings = external:$net2Name\n\
+[network_log]\n\
+[securitygroup]\n\
+firewall_driver = iptables\n\
+enable_security_group = true\n\
+enable_ipset = true\n\
+[vxlan]\n\
+enable_vxlan = true\n\
+l2_population = true\n\
+local_ip = $ctl_net3_IP "  > /etc/neutron/plugins/ml2/linuxbridge_agent.ini && \
+  echo "\
+[DEFAULT]\n\
+[l2pop]\n\
+[ml2]\n\
+type_drivers = flat,vxlan,vlan\n\
+tenant_network_types = vxlan\n\
+mechanism_drivers = linuxbridge,l2population\n\
+extension_drivers = port_security,qos\n\
+path_mtu = 1500\n\
+[ml2_type_flat]\n\
+flat_networks = external\n\
+[ml2_type_geneve]\n\
+[ml2_type_gre]\n\
+[ml2_type_vlan]\n\
+[ml2_type_vxlan]\n\
+vni_ranges = 1:1000\n\
+[securitygroup]\n\
+enable_security_group = true\n\
+enable_ipset = true " > /etc/neutron/plugins/ml2/ml2_conf.ini && \
+  mv ./sysctl /usr/sbin/sysctl && \
+  update-alternatives --set ebtables  /usr/sbin/ebtables-legacy && \
+  rm -f ./Dockerfile.* && \
+  ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini && \
+  cat hosts >>/etc/hosts && \
+  apt autoremove && \
+  apt-get clean && \
+  rm -rf /usr/share/man /usr/share/doc && \
+  rm -rf /var/lib/apt/lists/* && \
+  du -sh /* ; \
+  du -sh /usr/*; \
+  cat /etc/hosts
+CMD ["/bin/bash","./start.sh"]

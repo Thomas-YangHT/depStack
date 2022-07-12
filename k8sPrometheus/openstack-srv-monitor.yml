@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: openstack-exporter
+  namespace: monitoring
+  labels:
+    release: mypro 
+spec:
+  endpoints:
+  - port: h-metrics
+    path: /metrics
+    scheme: http
+    scrapeTimeout: 30s
+  selector:
+    matchLabels:
+      app: openstack-exporter
+  namespaceSelector:
+    matchNames:
+    - monitoring

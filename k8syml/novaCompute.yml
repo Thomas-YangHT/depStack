@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  creationTimestamp: null
+  labels:
+    app: novacompute
+  name: novacompute
+  namespace: openstack
+spec:
+  selector:
+    matchLabels:
+      app: novacompute
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: novacompute
+    spec:
+      hostNetwork: true
+      nodeSelector: 
+        compute: "true"
+      containers:
+      - env:
+        - name: controllerIP
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: controllerIP
+        - name: virt_type
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: virt_type
+        image: www.myharbor.com:10443/168447636/deepin20-novacompute:20.5
+        name: novacompute
+        volumeMounts:
+        - name: hosts-config
+          mountPath: "/depstack/configmap"
+        - name: libvirt-sock
+          mountPath: "/var/run/libvirt/libvirt-sock"
+        - name: instances
+          mountPath: "/var/lib/nova/instances"
+        - name: kernel-modules
+          mountPath: "/lib/modules/5.10.18-amd64-desktop"
+        - name: iscsi-conf
+          mountPath: "/etc/iscsi"
+        - name: run
+          mountPath: "/run"
+        - name: dev
+          mountPath: "/dev"
+        resources: {}
+        securityContext:
+          privileged: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: hosts-config
+        configMap:
+          name: hosts-config
+      - name: libvirt-sock
+        hostPath:
+          path: "/var/run/libvirt/libvirt-sock"
+      - name: instances
+        hostPath:
+          path: "/var/lib/nova/instances"
+      - name: kernel-modules
+        hostPath: 
+          path: "/lib/modules/5.10.18-amd64-desktop"
+      - name: iscsi-conf
+        hostPath: 
+          path: "/etc/iscsi"
+      - name: run
+        hostPath: 
+          path: "/run"
+      - name: dev
+        hostPath: 
+          path: "/dev"
+

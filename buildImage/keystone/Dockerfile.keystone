@@ -1,0 +1,58 @@
+FROM  168447636/deepin20:tools
+USER root
+WORKDIR  /depstack
+COPY ./sources.list  /etc/apt/sources.list
+COPY  .  .
+RUN echo 10.121.1.254 download.exam.com  >> /etc/hosts && apt update && apt -y upgrade && \
+  apt install -y apt-utils  && \
+##### start keystone install
+  apt install -d -y keystone && \
+  ls -l  /var/cache/apt/archives/keystone_*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/keystone_*.deb && \
+  echo keystone keystone/register-endpoint seen true | debconf-set-selections && \
+  echo keystone keystone/create-admin-tenant seen true |debconf-set-selections && \
+  echo keystone keystone/configure_db seen true |debconf-set-selections && \
+  TERM=xterm apt install -y keystone && \
+  mv /etc/keystone/keystone.conf /etc/keystone/keystone.conf.bak && \
+  egrep -v "^#|^$" /etc/keystone/keystone.conf.bak > /etc/keystone/keystone.conf && \
+  sed -i '/database/a\connection = mysql+pymysql://uoskeystone:keystone@controller/keystone' /etc/keystone/keystone.conf && \
+  sed -i '/\[cache\]/a\memcache_servers = controller:11211' /etc/keystone/keystone.conf && \
+  sed -i '/\[token\]/a\provider = fernet' /etc/keystone/keystone.conf && \
+##### start dashboard install
+  apt install -d -y openstack-dashboard-apache && \
+  ls -l  /var/cache/apt/archives/openstack-dashboard*.deb  && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/openstack-dashboard_*.deb && \
+  DEBIAN_FRONTEND=noninteractive dpkg-preconfigure /var/cache/apt/archives/openstack-dashboard-apache_*.deb && \
+  echo "\
+horizon horizon/allowed-hosts string *\n\
+horizon horizon/activate_vhost boolean true\n\
+horizon horizon/use_ssl boolean false "  | debconf-set-selections && \
+  TERM=xterm  apt install -y openstack-dashboard-apache && \
+  mv /etc/openstack-dashboard/local_settings.py /etc/openstack-dashboard/local_settings.py.bak && \
+  egrep -v "^#|^$" /etc/openstack-dashboard/local_settings.py.bak > /etc/openstack-dashboard/local_settings.py && \
+  echo "SESSION_ENGINE = 'django.contrib.sessions.backends.file'" >> /etc/openstack-dashboard/local_settings.py && \
+  echo  'OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True\n\
+OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = "Default"\n\
+OPENSTACK_API_VERSIONS = {\n\
+"data-processing": 1.1,\n\
+"identity": 3,\n\
+"image": 2,\n\
+"volume": 2,\n\
+"compute": 2,\n\
+}' >> /etc/openstack-dashboard/local_settings.py && \
+  sed -i "s/locmem.LocMemCache/memcached.MemcachedCache', 'LOCATION': 'controller:11211/" /etc/openstack-dashboard/local_settings.py && \
+  sed -i 's/UTC/Asia\/Shanghai/' /etc/openstack-dashboard/local_settings.py && \
+  sed -i 's/_member_/user/' /etc/openstack-dashboard/local_settings.py && \
+  sed -i "s/127.0.0.1/$controllerIP/" /etc/openstack-dashboard/local_settings.py && \
+  sed -i 's/ServerAdmin webmaster@localhost/ServerName controller/' /etc/apache2/sites-available/openstack-dashboard.conf && \
+  sed -i 's/#WSGIProcessGroup openstack-dashboard/WSGIApplicationGroup %{GLOBAL}/' /etc/apache2/sites-available/openstack-dashboard.conf && \
+  cat hosts >>/etc/hosts && \
+  rm -f docker-build.sh  Dockerfile.nova  sources.list && \
+  apt autoremove && \
+  apt-get clean && \
+  rm -rf /usr/share/man /usr/share/doc && \
+  rm -rf /var/lib/apt/lists/* && \
+  du -sh /* ; \
+  du -sh /usr/*; \
+  cat /etc/hosts
+CMD ["/bin/bash","./start.sh"]

@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: cindervolume
+  name: cindervolume
+  namespace: openstack
+spec:
+  hostNetwork: true
+  nodeSelector: 
+    volume: "true"
+  containers:
+  - env:
+    - name: volumeIP
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: volumeIP
+    - name: vg_name
+      valueFrom:
+        configMapKeyRef:
+          name: env-config
+          key: vg_name
+    image: www.myharbor.com:10443/168447636/deepin20-cindervolume:20.5
+    name: cindervolume
+    ports:
+    - containerPort: 3260
+      protocol: TCP
+    volumeMounts:
+    - name: hosts-config
+      mountPath: "/depstack/configmap"
+    - name: device
+      mountPath: "/dev"
+    - name: run
+      mountPath: "/run"
+    - name: lvm-conf
+      mountPath: "/etc/lvm/lvm.conf"
+    - name: cinder-volume
+      mountPath: "/var/lib/cinder"
+    resources: {}
+    securityContext:
+      privileged: true
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: hosts-config
+    configMap:
+      name: hosts-config
+  - name: device
+    hostPath: 
+      path: /dev
+  - name: run
+    hostPath: 
+      path: /run
+  - name: lvm-conf
+    hostPath: 
+      path: /etc/lvm/lvm.conf
+  - name: cinder-volume
+    hostPath: 
+      path: /var/lib/cinder
+
+
