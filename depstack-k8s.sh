@@ -7,7 +7,7 @@
 
 
 ##在compute01/compute02上配置准备
-function compoute_install(){
+function compute_install(){
    USER=deepin
    for compute in compute01 compute02;do
       ssh -o StrictHostKeyChecking=no $USER@$compute  "sudo  /bin/bash -s -- " <<EOFFF
@@ -326,7 +326,7 @@ source depstack.conf
 apt install -y ebtables python3-openstackclient
 
 creae_ns_configmap
-compoute_install
+compute_install
 star_k8s_stack
 ins_rabbitmq
 ins_keystone

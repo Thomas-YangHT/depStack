@@ -39,9 +39,27 @@
 | 168447636/rabbitmq:3-management            | 257MB  | 控制结点      | rabbitmq                  | rabbitmq:3-management |
 | 168447636/chrony:latest                    | 6.03MB | 计算+控制结点 | 时间同步                  | geoffh1977/chrony     |
 
-- 基于 deepin20.5
+**说明**
+
+- 基于 deepin20.5构建
 - openstack 3.16.2
 - 详见： https://hub.docker.com/u/168447636
+
+节点布署结构：
+
+| **控制节点controller** | **计算节点compute**       |
+| ---------------------- | ------------------------- |
+| docker                 | docker                    |
+| mariadb                | libvirtd/ kvm /qemu       |
+| memcached              | neutron-linuxbridge-agent |
+| chronyd                | nova-compute              |
+| rabbitmq               | chronyd                   |
+| keystone + dashboard   |                           |
+| glance                 |                           |
+| nova                   |                           |
+| neutron                |                           |
+
+
 
 ### 二、clone 与配置
 
@@ -99,7 +117,7 @@ compute02 # `cd depStack; bash depstack-docker-compute.sh  compute02`
 
 ### 四、验证结果
 
-controller #  `cd depStack;  bash  controller/check.sh` 
+controller #  `cd depStack;  bash controller/check.sh` 
 
 - 验证全部服务为 up
 
