@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## a shell script for docker coontroller 
+## a shell script for docker controller 
 ## system:  deepin 20.5
 ##
 #安装准备
@@ -32,6 +32,8 @@ function run_chrony(){
 
 #Mariadb数据库
 function run_mariadb(){
+    mkdir -p /var/lib/mysql
+    chmod 777 /var/lib/mysql
     docker run -d --name mariadb \
     --restart=always \
     -v /var/run/mysqld:/var/run/mysqld \
@@ -79,6 +81,8 @@ function run_rabbitmq(){
 
 #启动keystone/ dashboard 服务
 function run_keystone(){
+#    mkdir /etc/keystone    
+#    chmod 777 /etc/keystone
     docker run --name keystone \
     --restart=always \
     --net=host \
@@ -87,16 +91,18 @@ function run_keystone(){
     -p 5000:5000 \
     -p 35357:35357 \
     -v $PWD/hosts:/depstack/configmap/hosts \
-    -v /etc/keystone:/etc/keystone \
     -d \
     $DOCKER_REGISTRY/deepin20-keystone:20.5
     #168447636/deepin20-keystone:20.5
+ #   -v /etc/keystone:/etc/keystone \
+
 }
 
 #安装glance组件
 function run_glance(){
     docker run --name glance \
     --restart=always \
+    --net=host \
     -p 9191:9191 \
     -p 9292:9292 \
     -v $PWD/hosts:/depstack/configmap/hosts \
@@ -179,9 +185,6 @@ function init_data(){
     echo -e "export OS_USERNAME=admin OS_PASSWORD=keystone  OS_PROJECT_NAME=admin OS_USER_DOMAIN_NAME=Default OS_PROJECT_DOMAIN_NAME=Default OS_AUTH_URL=http://controller:35357/v3 OS_IDENTITY_API_VERSION=3 OS_IMAGE_API_VERSION=2  " > /root/admin-openrc.sh
     #复制到容器里
     docker cp /root/admin-openrc.sh keystone:/root/admin-openrc.sh
-    #重启keystone
-    #docker restart keystone
-    #sleep 20
     #在default域下创建service项目
     alias openstack='docker exec keystone'
     docker exec keystone  bash -c 'source /root/admin-openrc.sh && openstack project create --domain default --description "Service Project" service'
@@ -195,6 +198,7 @@ function init_data(){
     docker exec keystone  bash -c 'source /root/admin-openrc.sh && openstack role add --project demo --user demo user'
     #重启
     docker restart keystone memcache
+    sleep 20
     echo "--------------------------------------"
     echo -e "\033[32m Keystone组件安装完成 \033[0m"
     echo "--------------------------------------"
@@ -282,17 +286,14 @@ function init_data(){
     openstack endpoint create --region RegionOne network admin http://controller:9696'
     #生成数据库表结构
     docker exec neutron su -s /bin/bash neutron -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugin.ini upgrade head"
+    docker restart neutron
     echo "--------------------------------------"
     echo -e "\033[32m Neutron组件安装完成 \033[0m"
     echo "--------------------------------------"
 }
 
-#安装后的工作：
+#安装后的收尾工作：
 function post_install(){    
-    #重启服务
-    echo -e "\033[32m 重启docker容器，请稍候... \033[0m"
-    systemctl restart docker
-    sleep 30
     ##修正错误：vm网络端口不正常，日志报firewall deny规则不允许
     modprobe ebtables
     tee /etc/modules-load.d/ebtables.conf <<EOF
@@ -300,6 +301,11 @@ function post_install(){
 EOF
     update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
     docker exec neutron update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
+    ## 重启计算节点novacompute
+    user=deepin
+    ssh $user@compute01  sudo docker restart novacompute
+    ssh $user@compute02  sudo docker restart novacompute
+    sleep 10
     ##修正错误: Host 'controller' is not mapped to any cell
     docker exec nova  nova-manage cell_v2 discover_hosts --verbose
     #执行环境变量脚本
@@ -320,11 +326,16 @@ EOF
     #--nic net-id=581375e6-9130-4818-b307-cc33ccc07a01,v4-fixed-ip=10.4.1.4 \
     #--security-group 28be0a23-9c5b-4948-8672-7ac53b6f756f \
     #cirros
+    #重启服务
+    echo -e "\033[32m 重启docker容器，请稍候... \033[0m"
+    systemctl restart docker
+    sleep 30
 }
 
+
+##检查安装服务状态
 function check(){
-    ##检查安装服务状态
-    cat ./controller/check.sh |bash
+    cat ./tools/check.sh |bash
     echo "--------------------------------------"
     echo -e "\033[31m 浏览器访问http://$controllerIP,用户名admin /密码keystone 开启Openstack之旅 \033[0m"
     echo -e "\033[31m rabbitmq: 浏览器访问http://$controllerIP:15472,用户名uosrabbitmq/密码rabbitmq。开启Openstack之旅 \033[0m"
