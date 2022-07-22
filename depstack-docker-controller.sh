@@ -15,6 +15,17 @@ function pre_install(){
     apt install -y ebtables 
 }
 
+#连接到compute结点执行安装
+function install_compute(){
+   for IP in $computer01IP $computer02IP 
+   do
+      ssh $USER@$IP bash -s -- <<EOF
+      cd depStack; sudo bash depstack-docker-compute.sh \$HOSTNAME
+EOF
+   done
+}
+
+
 #chrony 时间服务
 function run_chrony(){
     docker run -d --cap-add SYS_TIME \
@@ -302,9 +313,8 @@ EOF
     update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
     docker exec neutron update-alternatives --set ebtables  /usr/sbin/ebtables-legacy
     ## 重启计算节点novacompute
-    user=deepin
-    ssh $user@compute01  sudo docker restart novacompute
-    ssh $user@compute02  sudo docker restart novacompute
+    ssh $USER@compute01  sudo docker restart novacompute
+    ssh $USER@compute02  sudo docker restart novacompute
     sleep 10
     ##修正错误: Host 'controller' is not mapped to any cell
     docker exec nova  nova-manage cell_v2 discover_hosts --verbose
@@ -343,6 +353,7 @@ function check(){
 }
 
 pre_install
+install_compute
 run_chrony
 run_mariadb
 run_memcache
